@@ -1,0 +1,19 @@
+Error Handling
+Certain Nodes raise errors when an error condition occurs. In order to handle the error, an Execution Flow Connector can be connected to the Error Output represented by the red Flow Socket at the bottom right of the Node.
+
+By attaching a Node to an error output, the error is handled.
+
+Additionally, the Any Error and Unhanded Error Execution Flow Sockets on the Start Node can be connected to provide Workflow-wide error handling.
+
+
+Direct Error Handling
+Attaching a Flow Connector to the error output of the Node will handle the error. Use this technique whenever you are aware of errors that may need to be handled as the result of execution of a certain Node.
+
+
+Behaviour of Any Error Output
+Attaching a Flow Connector to the Unhandled Error output will allow consumption of errors on any Node that does not have its Error Flow Socket connected and therefore acts as a global error handler.
+
+Unhandled Error will not fire for any errors that are handled directly on the Node.
+
+Errors that occur in Unhandled Error that are not directly handled will not cause Any Error to fire.
+

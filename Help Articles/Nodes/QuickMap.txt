@@ -1,0 +1,245 @@
+QuickMap
+QuickMap is Flowgear's Visual Data Mapper, supporting visual hierarchical mapping, Excel-style functions, aggregation and filtering.
+
+Provides a way to map a document into a desired form by providing visual hierarchical mapping and rich function-based field manipulation. Both JSON and XML document types are supported.
+
+ 
+
+
+
+
+For the legacy version of QuickMap (up to version 3.0.0.1), see the QuickMap (Legacy) article.
+
+ 
+
+Revision History
+4.0.0.5 Initial Release of new QuickMap
+4.0.0.6 Added STRINGVALUE function, simplified error messages
+4.0.0.7 Added ISEMPTY() function (similar to Excel ISBLANK). Renamed STRINGVALUE to TEXTVALUE to make it more consistent. Modified internal data type handling to eliminate type casting error
+4.0.0.8 Added FORMATNUMBER() and INDEXOF() functions
+4.0.0.9 Added LEFTOF(), RIGHTOF() and MIDOF() functions
+4.0.0.11 Added INDEX(), added graceful failure when a referenced Node doesn't exist
+4.0.0.12 Added support for JSON objects that are arrays at the root, fixed some bugs
+4.0.0.13 Added Auto Emit option, fixed some bugs
+4.0.0.14 Added support for JSON object { } containers (previously only supported JSON array [ ]  containers)
+4.0.0.15 Added caching of generated map for better performance
+4.0.0.16 Prevented automatic timezone conversion of date types in JSON values
+
+4.0.0.18 Added internal diagnostic
+
+4.0.0.21 Added XML attribute support, added ability to collapse multiple source arrays down to a single target array, added support for JSON object names with special characters, added SPLIT, added GETVALUE
+
+4.0.0.22 Fixed a regression issue, added ability to filter on container using container element in the filter mapping
+
+4.0.0.23 Included #text element when element contains attributes, this makes mapping to the value of the element much simpler
+
+ 4.0.0.26 Reworked support for JSON documents which fixes some parsing issues. Specifically, QuickMap will now correctly process documents containing JSON elements that have numeric names or special characters (e.g. 1234)
+
+4.0.0.27 Added support for root JSON arrays and an array as the immediate child of the root
+
+4.0.0.29 Fixed regression where XML documents starting with <? tag were not parsed correctly
+
+4.0.0.30 Resolved an issue where QuickMap wasn't taking advantage of caching when invoked in new Workflow instances. This drastically reduces invoke time once the initial map has been cached
+
+4.0.0.31 Resolved an issue where source JSON documents that contained element keys containing spaces or certain other characters were not mapped correctly
+
+4.0.0.31 Resolved multiple null object reference issues when attempting to manipulate empty strings
+
+4.0.0.33 Fixed an issue where inner XML value on XML elements containing attributes wouldn't render
+
+ 4.0.0.34 Clarified an unhelpful error message that occured when a custom property containing a document for lookup values was empty
+
+ 4.0.0.35 Fixed an issue where certain JSON documents were handled incorrectly. Specifically, a JSON document with an object root but multiple child elements of type array
+
+4.0.0.36 Fixed bug in INDEXOF()
+
+4.0.0.37 Added support to look up values within the main document using LOOKUP (the pre-existing behaviour is still supported).
+
+4.0.0.38 Fixed bug on LOOKUP changes
+
+ 
+
+Properties
+Source
+Type: Multiline Text Input
+Provides a source document that will be transformed in JSON or XML form.
+
+
+ 
+
+Mapping
+Type: Multiline Text 
+Describes the mapping,. Clicking this property opens the visual mapper.
+
+
+ 
+
+Emit
+Type: List Input
+Specifies the type of document that should be returned.
+
+  Auto
+ - The document type will be determined based on the sample data provided to the Result property
+Json - Specifies a JSON document
+Xml - Specifies an XML document
+
+
+
+ 
+
+Result
+Type: Multiline Text Output
+Returns the rendered document.
+
+
+ 
+
+Custom Inputs
+Add Custom Inputs to this Node to provide lookup tables for use with the LOOKUP function
+
+ 
+
+ 
+
+ 
+
+Remarks
+Use this Node to visually specify how data in one schema should be translated into another.
+
+ 
+
+ 
+
+Key Features
+Visual hierarchical mapping including upstream and downstream mappings
+
+Support for JSON, XML and XML schemas
+
+Automatic preview from within the Visual Mapper
+
+Manipulate field and container mappings using Excel-like functions
+
+Apply filters at the container level using Excel-like functions
+
+  
+
+Getting Started
+To begin using QuickMap, you'll need to provide sample data or a schema for the Source and Result properties. You can do this in several ways:
+
+ 
+
+Add an XML schema to the property (click the Schema tab in the popup editor)
+
+Add an XML schema to a property that the Source  or Result  property is connected to
+
+Provide an XML or JSON document on the Property
+
+Provide an XML or JSON document on a Property that the Source  or Result  property is connected to
+
+For the Source  property, it's often easiest to run the Node that QuickMap sources its data from, then open the output Property in the Activity logs, copy that value and paste it into Node property on the Design view. Note that clicking the Airplane button in the popup Pane will perform the copy/paste operation for you
+
+ 
+
+ 
+
+Visually Mapping Elements
+Create a Flow Connector by either dragging from the Flow Socket of the source schema tree (left-hand side) to a Flow Socket of the target schema (right-hand side).
+
+ 
+
+You can also create a Flow Connector by clicking the source Flow Socket, then clicking the target Flow Socket. 
+
+ 
+
+Tree elements that have child elements are considered containers, those that don't are considered fields.
+
+ 
+
+Mapping Expressions
+Provide an expression in the Mapping Expressions textbox next to the target schema tree to perform more complex manipulation of data.
+
+When a Map Expression textbox is focused, a palette of mapped fields and containers as well as a list of in-scope functions are displayed.
+
+ 
+
+See QuickMap Functions for a list of supported functions.
+
+ 
+
+Filter Expressions
+Toggle the expressions view to filter mode by clicking Switch to Filter Expressions . This mode will allow you to apply a filtering expression to any container element in the target tree
+
+ 
+
+Note that filters are not supported at the root level (i.e. they must be applied below the root output Node).
+
+ 
+
+See QuickMap Functions for a list of supported functions.
+
+ 
+
+ 
+
+How QuickMap derives a schema
+
+ 
+
+To be able to provide a visual tree, QuickMap must either obtain or infer a schema for the Source and Result properties. QuickMap considers the following options (in the order shown here):
+
+The presence of an XML or JSON document in the QuickMap Node Property (i.e. on the Source or Result property)
+
+The presence of an XML Schema in the Schema tab of the QuickMap Node Property
+
+The presence of an XML or JSON document in a Property that is connected to the QuickMap Node Property via a Data Flow Connector
+
+The presence of an XML Schema in the Schema tab in a Property that is connected to the QuickMap Node Property via a Data Flow Connector
+
+The presence of an XML or JSON document in the Activity Logs of the QuickMap Node Property (i.e. the Node has been executed and there is a viable document in the Activity Logs)
+
+The presence of an XML or JSON document in the Activity Logs for the Property connected to the QuickMap Node Property via  Data Flow Connector
+
+QuickMap will cease further searches as soon as a document is found per the order given above. This search is performed every time the QuickMap Mapping Property is opened so bear in mind that if you need QuickMap to 'see' new fields that weren't originally present, you need to make sure the new fields are present on the appropriate Property. 
+
+ 
+
+Consider this scenario:
+
+QuickMap is opened for the first time and discovers a JSON document from Activity Logs of a Node that contains a Property that connects in to the Source Property (test 6)
+
+The Console copies that Property value and places it in the Property Value for the corresponding Property
+
+You run the Workflow again after changing an earlier point in the workflow and the result is that a new field is now present (and shows up in the Activity Logs)
+
+You re-open QuickMap but the new field doesn't show because the discovery of a viable document stops at test 3 because there is now a value present directly on the Property
+
+In this situation, if you want QuickMap to 'see' the new field, you should clear out the value on the connected property so that the next time you open the Mapping Property, QuickMap will test all the way to test 6 again.
+
+ 
+
+Special Scenarios
+Returning 'null'
+To return a null value in an expression, using the keyword Nothing (note that this keyword is not case-sensitive. For example, if you wish to conditionally return a null value from an expression, you can use an expression similar to this example:
+
+ 
+
+IIF({FieldOfInterest} <> 'NullableValue', Nothing, {FieldOfInterest})
+ 
+
+ 
+
+
+
+ 
+
+Examples
+
+See https://flowgear.me/s/BIo4BHD for an example.
+
+ 
+
+See Also
+
+LINQ
+XSL Transform
+Script

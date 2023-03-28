@@ -1,0 +1,107 @@
+For Each
+Use this Node to iterate over individual records (or smaller sets of records) in a document.
+
+ 
+
+Revision History
+1.0.0.0 Initial Release
+1.0.0.3 Fixed bug where a dynamic path doesn't take affect after being updated.
+
+1.0.0.4 Changed xml parsing to use XDocument instead of XmlDocument - performance improvement.
+
+1.0.0.5 Fixed bug when root element contain a namespace and ParentAndRootNodes are selected.
+
+1.0.0.6 Fixed regression issue where encapsulation is set to None. This used to return InnerXml, but changed to InnerText from v1.0.0.4
+
+1.0.0.8 Fixed bug where a json document that start with an array is used with ParentAndRootNode encapsulation.
+
+1.0.0.9 Changed behavior to emit Finished when no source document supplied. 
+
+ 
+
+Properties
+SourceDocument
+Type: Multiline Text Input
+The document containing the records to iterate over, this may be an XML or JSON document.
+
+
+
+ 
+
+Path
+Type: String Input
+A path that identifies a single record in the document. If SourceDocument is an XML document, Path  should contain an XPath. If SourceDocument is a JSON document, Path should contain a JSON Path.
+
+
+
+ 
+
+Encapsulation
+Type: List Input
+Specifies how each record should be encapsulated in 
+None - No encapsulation is performed
+ParentNode - The root element the object matched at Path is returned
+ParentAndRootNodes - The document root element and the object root element are nested into the returned document.
+
+
+
+ 
+
+Namespaces
+Type: Multiline Text Input
+For XML documents, provides a list of namespace prefixes and namespaces in the form {prefix}:{namespace} as shown below:
+
+ 
+
+ns:tempuri.org
+ns2:otheruri.org
+ 
+
+ 
+
+ChunkSize
+Type: Int32 Input
+The number of matches that should be returned per iteration. This can be used to achieve bulk processing but is set to 1 by default. If greater than 1, an Encapsulation  option other than None  must be set, otherwise an invalid document will be returned (ie. the document will have more than one root Node).
+
+
+ 
+
+Item
+Type: Multiline Text Output
+The document returned for the current iteration.
+
+
+
+ 
+
+ItemIndex
+Type: Int32 Output
+The index of the item (or batch of items if ChunkSize is greater than 1).
+
+
+
+ 
+
+ItemCount
+Type: Int32 Output
+The total number of items (or batch of items if ChunkSize is greater than 1) that were matched by Path.
+
+ 
+
+ 
+
+Remarks
+This Node is used to iterate over sections of an XML or JSON Document. Each match of the supplied Path on SourceDocumen  will cause the Item Output to Fire. When all matches have fired, the Finished Output will fire.
+
+Note that this Node will exit prior to completion of all iterations if a request is made to stop the Workflow.
+
+ 
+
+Error Handling
+This node will iterate through all supplied items, even when an error is encountered, unless the error itself triggers a nested error. In order to stop the For-Each execution when an error is encountered, we recommend setting and checking an error flag using the Key-Value nodes or String Builder node.
+
+ 
+
+Examples
+
+See https://flowgear.me/s/DkIVHzE for examples.

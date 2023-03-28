@@ -1,0 +1,117 @@
+WooCommerce
+Help article for the WooCommerce node that wraps the WooCommerce REST API.
+Revision History
+1.0.0.0 Initial Release.
+
+1.0.0.1 Added support for auth via query string parameters.
+
+Properties
+Connection
+Type: Connection Input
+The Connection Property
+
+SiteUrl
+Type: String
+
+Mandatory
+
+The base URL for your WooCommerce site. E.g. https://mywooshop.com
+
+
+IndexUrl
+Type: String
+
+Mandatory - Default /wp-json/wc/v3
+
+This url determines which endpoint Flowgear uses to generate the list of samples. Supports v2.
+
+
+ConsumerKey
+Type: String
+
+Mandatory
+Used for authentication, see https://woocommerce.github.io/woocommerce-rest-api-docs/#rest-api-keys for instructions on how to generate credentials.
+
+ConsumerSecret
+Type: Password
+
+Mandatory
+
+Used for authentication, see https://woocommerce.github.io/woocommerce-rest-api-docs/#rest-api-keys for instructions on how to generate credentials.
+
+
+ReturnRestFailureResponses
+Type: Boolean
+When turned ON - Errors are not expressed as node errors, but are instead expressed inside the response payload.
+
+
+
+ExcludeEmptyQueryParameters
+Type: Boolean
+When turned ON - Any empty custom properties on the node that would usually be expressed as query string paremeters are ignored.
+
+ 
+
+
+AuthenticateUsingQueryStringParameters
+Type: Boolean
+When turned ON - Authentication is passed inside the URL via query string parameters, turn this ON when the WooCommerce site won't accept authentication via headers.
+
+
+OperationId
+Type: String Input
+
+Mandatory (Auto-generated when a sample is selected)
+Contains the ID of the operation chosen from a Node Sample. This property shouldn't be manually changed.
+
+ 
+
+Description
+Type: String Input
+A generated description of the operation based on what was available in the Swagger document.
+
+
+
+
+Request
+Type: Multiline Text Input
+Contains the request payload (usually JSON) that provides the detail of the operation to perform. A sample value for this property is populated when a Node Sample is selected.
+
+
+
+ResponseCode
+Type: Type: String Output
+Contains the response code returned from the API Server. 200 = Success etc.
+
+
+
+Response
+Type: Multiline Text Output
+Contains the response payload (usually JSON) as received from the API. Where possible, a sample value of this property is populated when a Node Sample is selected.
+
+
+
+Custom Inputs
+This Node supports Custom Input Properties and the appropriate properties will be added to the Node when a Node Sample is selected. These Properties are resolved into parameters in the URL that is generated for the request. For example, if the operation will query a customer record, the Swagger document may specify the URL template as /customers/{customerId} . In this case, a Custom Property called customerId will be added to the Node when a "get customer" Node Sample is selected.
+
+
+ 
+
+Remarks
+HTTPS Required
+The WooCommerce Node makes use of Consumer Key & Secret -based authorization. For this reason, only HTTPS URL's are supported. Ensure that the value provided in WooCommerceBaseUrl begins with https://  and not http:// .
+
+ 
+
+Using Samples
+This Node provides Samples for all supported calls. Samples can be accessed from the Node Samples Pane.
+
+ 
+
+Authentication Errors
+Depending on the way your website is configured, it may not accept the default authentication model where key & secret are passed via the HTTPS Authorization Header. If you receive a key or secret error, turn on the AuthenticateUsingQueryStringParameters Property in the Connection.
+
+ 
+
+See Also
+The WooCommerce node wraps the WooCommerce REST API. Documentation for this API can be found here, https://woocommerce.github.io/woocommerce-rest-api-docs/

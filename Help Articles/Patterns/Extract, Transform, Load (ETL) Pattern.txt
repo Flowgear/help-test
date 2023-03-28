@@ -1,0 +1,119 @@
+Extract, Transform, Load (ETL) Pattern
+See how to build the most common type of Workflow
+
+
+
+Most integration workflows follow these basic steps:
+
+ 
+
+Extract data from source app or service
+
+Transform the data into the shape required by the target system
+
+Load the data into the destination app or service
+
+This article outlines the overall pattern and individual steps you would use to create a production-ready ETL integration. This pattern is suitable for both master and transactional data loading and can work in batch or near-realtime modes (depending on the Trigger you've chosen to use.
+
+ 
+
+This article assumes you're already familiar with the Nodes that are referred to. If you're not, we recommend you read the relevant linked Node help articles as you encounter them.
+
+ 
+
+Implement an ETL Pattern
+Create a basic ETL Workflow
+Add a Node to query your data source (e.g. SQL Query), we'll call this the Extract Node from here on out. Prepare the Node by configuring it to extract a small amount of data (you don't want to be overwhelmed with an enormous dataset while you're building out the workflow.
+
+Next, add a Node to insert data into the destination (e.g. Salesforce), we'll call this the Load Node from here on out. Select an appropriate Node Sample or otherwise manually provide a request payload for the type of action you're going to perform (e.g. Create Contacts).
+
+ 
+
+Finally, add a QuickMap Node to map from the source to the target and run the Workflow to test these Nodes have been correctly configured.
+
+ 
+
+Use the Splitter to work with data in smaller chunks
+Although it might be possible to query a large number of records from the data source in one shot, few API's allow you to push large amounts of data in one shot. In addition, if some records fail to integrate, not all API's will allow you to configure how partial failure should be handled. For these reasons, it's preferable to break up the incoming data into small sets that are processed one after the other.
+
+To achieve this, use a Splitter Node (insert it just after your Extract Node, SQL Query in this case). The XPath on the Splitter will identify a single record out of the dataset (e.g. Result/Table). Be sure to set the Encapsulation property appropriately (usually ParentNode).
+
+ 
+
+Finally, you'll need to recofigure QuickMap. To do this, provide some sample source data in the SplitDocumentXml Property of the Splitter and connect that to the SourceXml Property of QuickMap so it can see what your data source looks like.
+
+ 
+
+Determine whether the integration succeeded
+Use an XML Match Node (called Get Responses Node from here on out) to pull the relevant data out of the response from the Load Node. Typically, you want to add Custom Property XPath's for the location in the response that contains the identity of a successfully created record (e.g. Response/results/id) as well as one that returns the text of an error, if an error occured (e.g. Error/Error/results/errors/message).
+
+ 
+
+Use an If Node after the XML Match Node to branch execution depending on whether or not the integration was successful. Connect from the identity value derived in the XML Match above into the Value property of the If Node and then use the expression Value <> "" to branch the Workflow depending on whether or not the integration processed successfully.
+
+ 
+
+Use Statistics to record success or failure
+Flowgear Statistics are key/value pairs that are collated by a group name. Statistics are a simple technique that is used to monitor success or failure of an integration either by building a workflow that takes an action based on Statistic values or by generating a report of Statistics which is sent to users.
+
+ 
+
+Connect a Statistic Node to the Trueoutput of the If Node and a separate Statistic Node connected to the False output.
+
+ 
+
+As mentioned, Flowgear Statistics are key/value pairs. The value that we'll assign will be either the generated ID (e.g. the Salesforce contact ID) or the error message. However, the key should be the key of the record that was obtained from the Extract Node. To obtain this key, add an additional XML Match immediately aftter the Splitter to obtain the ID of the record being integrated per the data source. In the example shown, the XPath Custom Property is set to Table/id . Connect from the output of this XML Match Node to the Key property of both Statistic Nodes.
+
+ 
+
+Connect from the ID output of the Get Responses Node to the Value input of the success Statistic Node, then connect from the error message output of the Get Responses Node to the Value input fo the failure Statistic Node.
+
+ 
+
+Set the Group property to an appropriate identifier (e.g. contacts) and then set the Status properties of each of the Statistic Nodes to Success and Error  respectively.
+
+ 
+
+After running the Workflow again, add a Query Statistic Node to verify data is being written to the statistics store. 
+
+ 
+
+Use the Reducer to exclude unchanged data
+It's often not possible to query a data source so that it only returns changed data. The Reducer Node is used to accommodate this limitation in a data source by excluding all data that has not changed since it was last encountered.
+
+ 
+
+The Reducer can be used in a single stage (immediate commit) or two stage (deferred commit) mode. Deferred commit is recommended, for further information, refer to the Reducer help article.
+
+ 
+
+Add a Reducer Node immediately after querying the data source. Provide an XPath (e.g. Table/Result) that will return a single record for the type of data being integrated. Provide a KeyXPath which will return the value of the XML element that contains the ID of the record (e.g. id). Set the Reducer Action  To Reduce .
+
+ 
+
+Add a second Reducer at the end of the successful branch (i.e. after creating the successful Statistic).
+
+ 
+
+On this Reducer, connect the document from the output of the Splitter into the SourceXml  property and set appropriate values for XPath (e.g. Table) and XPathKey (e.g. id). Set the Action  property to Commit .
+
+ 
+
+Test the Reducer by running the Workflow twice. On the first run, all records should be processed. On the second run, only previously failed or changed records should be processed.
+
+ 
+
+ 
+
+ 
+
+Best practice tips
+When implementing the Workflow, constrain the data source so that you're only dealing with a few source records. This will make it easier to find the Activity Logs you're interested in and ensures you don't waste time waiting for the Workflow to complete processing a large amount of data each time you test
+
+Detecing and handling errors is very important. Include bad records in your source data so you can confirm the Workflow handles them correctly. If you don't have access to the data source, you can manually modify the data in the Extract Node result Property and then start Workflow execution from the next Node. This causes the extract to be skipped and ensures that your manually prepared data is used as the input to the next stage
+
+There may be multiple types of failures that can occur. Complete failures (e.g. due to a bad connection or credentials) should be handled with standard Workflow Error Handling techniques.  Bad data errors should be handled by reading the response from the Load Node as shown in this article. It may also be necessary to capture multiple XPaths depending on the class of error.
+
+Flowgear Statistics can't be deleted so while you're implementing, set a temporary group  name that won't interfere with production datasets
+
+You can easily reset the Reducer to simulate fresh data (set the Reset property on the Reducer to do this)

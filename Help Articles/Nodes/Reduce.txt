@@ -1,0 +1,160 @@
+Reduce
+Provides a simple mechanism for excluding records that have not changed since they were last seen in Flowgear so that Workflows can easily process only delta data (additions or changes). For example, if you are building an integration that retrieves a list of invoices from an e-commerce platform but aren't able to filter out those that have already integrated on the last run, the this Node can be used to exclude those that have already been integrated.
+
+Warning: This Node should only be used as an assist to reduce the amount of master data to be processed. Don't rely on this Node to prevent duplication of transactional data (the Key Value Nodes can be used for this purpose).
+
+ 
+
+ 
+
+ 
+
+Revision History
+1.0.0.0 - Initial release
+
+1.0.1.1 - Added ReduceWithTokens and CommitWithTokens
+
+ 
+
+ 
+
+ 
+
+ 
+
+Properties
+Group
+Type: String Input
+An identifier, unique to the Site that is used to group the type of data being processed. For example "Customers".
+
+ 
+
+Action
+Type: List Input
+ReduceCommit - Strip out records that have previously passed through the Node and immediately commit the remaining items so they will not be returned on the next iteration
+Reduce - Strip out the records that have previously passed through the Node but don't store the signatures of any new or changed records
+Commit - Commit the records that are provided
+The processing action to be taken by the Node
+ReduceWithTokens - This will return the payload which include two elements that contain tokens which can be committed using the CommitWithTokens action. These tokens are __KeyToken and __ValueToken. This is currently only implemented on xml documents. 
+
+CommitWithTokens - This can be used to commit the tokens generated from the ReduceWithTokens action. This is useful because the original document doesn't need to be reconstructed. When using this action, the Path should point to the __ValueToken, and KeyPath should point to __KeyToken. 
+
+ 
+
+Reset
+Type: Boolean Input
+When True , indicates that the cache of processed records should be reset for the specified Group .
+
+ 
+
+Path
+
+ 
+
+Type: String Input
+The Path expression that returns isolated entities (for example, a single Customer record out of a list of Customers)
+
+ 
+
+When an XML document is supplied, this should be an XPath expression, for example Customers/Customer 
+
+When a JSON object is supplied, this should be a JSON Path, for example Customers.Customer 
+
+When a JSON array is specified, this property can be left blank.
+
+ 
+
+ 
+
+KeyPath
+Type: String Input
+An optional path to a field in SourceDocument that uniquely identifies each record. For example, if you are processing a list of invoices, this could be the path to the invoice number field. 
+
+ 
+
+Providing this path will cause the signature of the record to be associated with the Key identified by this path. Note that KeyPath is relative to Path (this may change in a future version). See Remarks for further information on when to use this Property.
+
+ 
+
+SourceDocument
+Type: Multiline Input
+A document in XML or JSON form that provides the list of records to be processed.
+
+ 
+
+ReducedDocument
+Type: Multiline Output
+The returned document that will omit all previously seen records.
+
+ 
+
+Remarks
+This Node eliminates data that has previously been 'seen'  by comparing the signature (crypographic hash) of each individual record in the document with a persisted list of previously seen signatures. Records that have equivalent stored signatures are then removed from the document and returned in the ReducedDocument Property.
+
+The primary use cases for this Node are reduction of master data where a large number of records are being integrated or to assist in preventing duplication of transactional data when where there is no way to prevent the same transaction from being returned by the source system.
+
+There are two design patterns for use of this Node:
+
+ 
+
+Immediate commit pattern
+Request data from source system and pass it into the Reduce Node
+
+Set Action to ReduceCommit 
+
+Process the data that is returned ReducedDocument 
+
+This pattern should be used whenever you are certain you will never need the same data again once it has been received even if an error occurs later on in the Workflow.
+
+
+ 
+
+Deferred commit pattern
+Request data from source system and pass it to the Reduce Node
+
+Set Action to Reduce 
+
+Process the records
+
+Add a second instance of the Reduce Node and for any transactions/master data records that are successfully processed, invoke this instance by passing the same document structure as was passed to the first Reduce Node, with Action  set to Commit.
+
+This pattern should be used whenever you may need to re-request the same data from the source again when it fails to integrate
+
+ 
+
+Using KeyPath
+Consider stock records that run through the Reduce Node every time the stock level changes. First:
+
+ 
+
+<Levels>
+  <Stock>
+    <Code>PROD-001</Code>
+    <Quantity>1</Quantity>
+  </Stock>
+</Levels>
+And then second:
+
+ 
+
+<Levels>
+  <Stock>
+    <Code>PROD-001</Code>
+    <Quantity>2</Quantity>
+  </Stock>
+</Levels>
+Now, if the stock level drops back to 1, the record will not be returned by the Reduce Node again because the signature for that record has already been stored.
+
+ 
+
+In order to prevent this from happening, the KeyPath must be used. If the Path is Levels/Stock  then the KeyPath  should be Code. (Note that KeyPath  is supplied relative to Path ).
+
+ 
+
+This enables the Node to store that state keyed against the value that is resolved from KeyPath which ensures that a record will be re-processed even if it returns to an earlier state.
+
+ 
+
+Examples
+
+See https://flowgear.me/s/WKNt0kR for examples.

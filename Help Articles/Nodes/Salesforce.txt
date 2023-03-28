@@ -1,0 +1,209 @@
+Salesforce
+Provides create, update, upsert, query and get integrations for Salesforce via it's REST API. See Setting up Outbound Messages in Salesforce for detail on how to receive messages from Salesforce.
+
+ 
+
+
+Revision History
+3.0.0.45 Updated to API v45, added bulk update and upsert capabilities, misc other enhancements
+3.0.0.46 Fixed bug where expired session was not being re-acquired
+3.0.0.50 Added the Salesforce File node
+
+4.0.0.0 Modified Create operations to use bulk API which permits 200 items to be inserted in a single call, added support for GetNextRecords to retrieve next page of results for large queries
+
+4.0.0.1 Modified error handling so that a valid document is returned in the Response property in case of failure
+
+4.0.0.2 Changed Create action to use /composite/sobjects API to create up to 200 items in a single call. Added QueryAll supported so that deleted items can be retrieved, tidied error handling and added HadError output property for simpler validation of full/partial success
+
+4.0.0.3 Added support for Delete action. Also Added support to emit JSON.
+
+4.0.0.4 Modified Update action to use SObjects PATCH. Supports 200 items per call.
+
+4.0.1.4 Use v46 of Salesforce API.  Modified Upsert action to use SObjects Collection Upsert.  Supports upserting of 1000 records per execution of the Node.  Requires implementation of ExternalIdField on the object being upserted.  If ExternalIdField is NOT provided, then the functionality will fall back to the original Composite Batch upsert, which supports upserting 25 records per execution of the Node.  Note that this is a breaking change if you are already implementing Upserts with the use of ExternalIdField.  The reason for this is that the structure of the response returned by Salesforce is different for the newly-implemented method in their API.  So in such a scenario, be careful to revisit existing workflow logic that is dependent on the structure of data returned by the Upsert method.
+
+4.0.1.7 Resolve version issues with 4.0.1.4.  Please review notes of 4.1.0.4 above.
+
+4.0.1.9 Fixed an issue where an invalid referenceId was constructed by the Node during Composite Upsert operation
+
+ 
+
+ 
+
+Properties
+Connection
+Type: Connection Input
+Url
+Type: String
+An optional URL for the Salesforce instance. This property should only be necessary for Sandbox environments.
+
+ConsumerKey
+Type: String
+The App Consumer Key (See Creating a Connection below)
+
+ConsumerSecret
+Type: Password
+The App Consumer Secret (See Creating a Connection below)
+
+Username
+Type: String
+The Salesforce user username.
+
+Password
+Type: Password
+The Salesforce user password.
+
+SecurityToken
+Type: Password
+The Salesforce account security token (See Creating a Connection below)
+
+ 
+
+DontInterleaveRequestsInResponse
+Type: Boolean
+By default, the records in the Request property will be interleaved in to the records in the Response property which makes it much easier to correlate records in batch requests. If this setting is turned on, interleaving is skipped - consider using this if you don't need to correlate request records with response records and have a large volume of requests to make (there is a small performance gain if this setting is enabled).
+
+EncodingMode
+Type: List
+
+XmlInXmlOut
+XmlInJsonOut
+
+Specifies how request and response data should be encoded
+
+
+The Connection Property
+
+
+ 
+
+Action
+Type: List Input
+Create - creates one or more records
+Update - updates one or more records keyed on the Id field
+Get - retrieves the record specified by the Id field in the Request Property
+Query - returns a list of all records matching the specified SQL filter
+Upsert - updates or creates one or more records. If Id or the field name specified in ExternalIdField is present, an update is performed otherwise a create is performed
+The Action to perform against the object in ObjectName .
+GetNextRecords - when not all results are returned by a call using the Query action, this action can be used to retrieve the next page of results.
+QueryAll - returns all records including those that have been deleted (use IsDeleted = true in the query. This Action assists in sync workflows that need to include sync of deletions.
+Delete - deletes the records specified in Request
+
+ 
+
+ObjectName
+Type: String Input
+The name of the object to be acted upon.
+
+ 
+
+ 
+
+ 
+
+ExternalIdField
+Type: String Input
+Where Action is Update or Upsert , records can be updated by keying them on the Id field or, if a value is provided for ExternalIdField , by keying them on that field instead. 
+
+ 
+
+Request
+Type: Xml Input
+The API request. Obtain an example request by loading the choosing the appropriate Node Sample.
+
+HadError
+
+Type: Boolean Output
+When true, indicates that either a complete or partial failure occurred. In the case of a write Action, this indicates that at least 1 record out of a batch failed to write.
+
+ 
+
+Response
+Type: Xml Output
+The response returned by the Salesforce API
+
+
+ 
+
+Remarks
+ 
+
+Creating a Connection
+
+Register an app in your Salesforce account
+
+ 
+
+After signing in to Salesforce, click the Setup cog (top, right of screen), then click Setup.
+
+In the menu on the left, click Apps, then click App Manager.
+
+Click New Connected App.
+
+Provide a name for your app and API name (eg. Flowgear for both) as well as a contact email and name.
+
+Tick the Enable OAuth Settings checkbox.
+
+Provide a secure URL (eg. your website) in Callback URL (eg. https://yourcompany.com).
+
+Under Selected OAuth Scopes, click Full access (full) then click the Add button.
+
+Click Save, then Continue.
+
+In the page that loads next, the value in Consumer Key should be copied and pasted into the ConsumerKey property in your Flowgear Salesforce Connection while the Consumer Secret (click Click to reveal) should be used in the ConsumerSecret property.
+
+Obtain a security token for your Salesforce account
+
+ 
+
+After signing in to Salesforce, click the Person Icon (top, right of screen), then click Settings.
+
+In the menu on the left, click Reset my Security Token under My Personal Information.
+
+Click the Reset Security Token button to have a new token emailed to you (note that this will invalidate any previously used tokens).
+
+In the email you receive, copy the security token into the SecurityToken property in your Flowgear Salesforce Connection.
+
+Using a Sandbox Account
+
+ 
+
+If you are using a Sandbox Salesforce account, you need to set the URL property of the Connection as https://test.salesforce.com
+
+The account should be created from the developer portal instead of a normal signup.
+
+Query Continuation
+
+ 
+
+You can use the GetNextRecords action to retrieve the next page of results for a Query when not all results were returned. Load the appropriate NodeSample and a custom property called nextRecordsUrl will be added to the Node. Connect a Data Flow Connector from the Result Property of the Salesforce Node that runs the inital query to the nextRecordsUrl Property. Use a Data Mapping Expression to obtain the nextRecordsUrl element of the Result Property. For an example of query continuation, see this parent and associated child workflow.
+
+ 
+
+Query Object Relationships
+
+ 
+
+Salesforce queries using the SOQL language can reference multiple objects so long as those objects have a defined relationship. This allows you to query multiple different objects within a single API call. E.g, you can query both Orders and OrderItems with the same call.
+
+ 
+
+This can help reduce the number of API calls needed to successfully establish a complete dataset. See example, https://flowgear.me/s/1sl42HF
+
+ 
+
+ Rate Limiting
+
+ 
+
+The Salesforce Node uses the Composite API with SObjects which permits up to 200 items to be created/inserted/upserted in a single call. Each call counts as a single call for API limit purposes.
+
+ 
+
+See https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm and https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_api.htm for more information.
+
+ 
+
+ See Also
+ 
+
+Salesforce File
